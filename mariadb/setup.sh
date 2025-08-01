@@ -6,25 +6,23 @@
 
 # Ce script est optimisé pour Ubuntu 24.04 (Noble Numbat) et MariaDB 11.8.
 
-# Installer les dépendances nécessaires pour ajouter un dépôt APT sécurisé.
-apt_get_with_lock install -y wget software-properties-common dirmngr ca-certificates apt-transport-https
+# Installer les dépendances nécessaires pour ajouter un dépôt externe.
+# La commande 'apt_get_with_lock' a été remplacée par 'sudo apt-get' car elle n'est pas une commande standard.
+sudo apt-get install -y wget software-properties-common dirmngr ca-certificates apt-transport-https
 
-# --- Dépôt MariaDB pour Ubuntu 24.04 (méthode moderne sans apt-key) ---
+# --- Configuration du dépôt MariaDB pour Ubuntu 24.04 ---
 
-# Télécharger la clé GPG de MariaDB et la placer dans le répertoire des clés d'APT.
-curl -LsS https://mariadb.org/mariadb_release_signing_key.asc | sudo gpg --dearmor -o /usr/share/keyrings/mariadb.gpg
-
-# Ajouter le dépôt MariaDB 11.8 pour Ubuntu 24.04 (noble) en utilisant la clé GPG.
-# La version "noble" d'Ubuntu 24.04 est ciblée.
-echo "deb [signed-by=/usr/share/keyrings/mariadb.gpg] http://mariadb.mirror.globo.tech/repo/11.8/ubuntu noble main" | sudo tee /etc/apt/sources.list.d/mariadb.list > /dev/null
+# Utiliser le script officiel de configuration de dépôt MariaDB.
+# J'ai ajouté les paramètres --os-type="ubuntu" et --os-version="noble" pour corriger l'erreur de "os-type or os-version".
+curl -LsS https://r.mariadb.com/downloads/mariadb_repo_setup | sudo bash -s -- --mariadb-server-version="mariadb-11.8" --os-type="ubuntu" --os-version="noble"
 
 # Mettre à jour la liste des paquets après l'ajout du nouveau dépôt.
-apt_get_with_lock update -y
+sudo apt-get update -y
 
 # --- Fin de la configuration du dépôt ---
 
 # Installer le serveur et le client MariaDB.
-apt_get_with_lock install -y mariadb-server mariadb-client
+sudo apt-get install -y mariadb-server mariadb-client
 
 # Créer la base de données AzuraCast avec les variables fournies.
 # Utilisation de utf8mb4 pour une compatibilité complète avec les caractères spéciaux.
