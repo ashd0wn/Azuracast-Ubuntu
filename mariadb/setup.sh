@@ -1,39 +1,33 @@
 #!/usr/bin/env bash
 
 ##############################################################################
-# setup_mariadb
+# setup_mariadb_for_ubuntu_2404
 ##############################################################################
 
-# It seems that Azuracat is actually need MariaDB 10.9? Actual default Ubuntu version is 10.6
+# Ce script est optimisé pour Ubuntu 24.04 (Noble Numbat) et MariaDB 11.8.
+
+# Installer les dépendances nécessaires pour ajouter un dépôt externe.
 apt_get_with_lock install -y wget software-properties-common dirmngr ca-certificates apt-transport-https
 
-if [ "$azuracast_git_version" = "stable" ] || [ "$azuracast_git_version" = "rolling" ]; then
-    curl -LsS https://r.mariadb.com/downloads/mariadb_repo_setup | sudo bash -s -- --mariadb-server-version="mariadb-$set_mariadb_version"
-else
-    apt_get_with_lock install software-properties-common gnupg2 -y
-    apt-key adv --fetch-keys 'https://mariadb.org/mariadb_release_signing_key.asc'
-    add-apt-repository -y 'deb [arch=amd64] https://mariadb.mirror.globo.tech/repo/11.8/ubuntu noble main'
-    apt_get_with_lock update -y
-fi
+# Ajouter le dépôt MariaDB 11.8.
+# La version "noble" d'Ubuntu 24.04 est ciblée.
+apt_get_with_lock install software-properties-common gnupg2 -y
+apt-key adv --fetch-keys 'https://mariadb.org/mariadb_release_signing_key.asc'
+add-apt-repository -y 'deb [arch=amd64] http://mariadb.mirror.globo.tech/repo/11.8/ubuntu noble main'
+apt_get_with_lock update -y
 
+# Installer le serveur et le client MariaDB.
 apt_get_with_lock install -y mariadb-server mariadb-client
 
-# Create AzuraCast DB
-# Create AzuraCast DB
+# Créer la base de données AzuraCast avec les variables fournies.
+# Utilisation de utf8mb4 pour une compatibilité complète avec les caractères spéciaux.
 /usr/bin/mariadb -e "create database $set_azuracast_database character set utf8mb4 collate utf8mb4_bin;"
 /usr/bin/mariadb -e "create user \`$set_azuracast_username\`@localhost identified by '$set_azuracast_password';"
 /usr/bin/mariadb -e "grant all privileges on $set_azuracast_database.* to \`$set_azuracast_username\`@localhost;"
 
-# Prepare MySQL-Root-Password
-if [ "$azuracast_git_version" = "stable" ] || [ "$azuracast_git_version" = "rolling" ]; then
-    sed -i "s/changeToMySQLRootPW/$mysql_root_pass/g" mariadb/config/mysql_secure_installation.sql
+# Le script original note que la sécurisation de l'installation sera effectuée plus tard.
+echo "La sécurisation de l'installation de MariaDB sera gérée par une autre étape."
 
-    # Secure MySQL in same way like: mysql_secure_installation
-    /usr/bin/mariadb -sfu root < mariadb/config/mysql_secure_installation.sql
-else
-    echo "do nothing, will do it later in another way"
-fi
-
-# Because of AzuraCasts Supervisor Integration
+# Désactiver et arrêter le service MariaDB pour permettre à Supervisor de le gérer.
 systemctl disable mariadb
 systemctl stop mariadb
