@@ -1,41 +1,40 @@
-#!/usr/bin/env bash
+#!/bin/bash
+# misc/prepare_system.sh
 
-# Exit if the installer has already been run
-if [ -e "$installerHome/azuracast_installer_runned" ]; then
-  echo "Installer has already been run. Exiting..."
-  exit 1
+# Détermine le répertoire de base du script pour sourcer correctement les outils
+# La variable BASEDIR sera le répertoire "Azuracast-Ubuntu/"
+BASEDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )/.."
+
+# Source la fonction apt_get_with_lock pour la rendre disponible
+# Cela charge le contenu de tools/apt_get_with_lock.sh dans ce script.
+source "${BASEDIR}/tools/apt_get_with_lock.sh"
+
+# Vérifie si le fichier de fonction a été sourcé correctement
+if ! type "apt_get_with_lock" &> /dev/null; then
+    echo "Error: apt_get_with_lock function not found. Ensure tools/apt_get_with_lock.sh is correctly sourced."
+    exit 1
 fi
 
-# Stop unattended-upgrades (suppress any errors)
-systemctl stop unattended-upgrades || true
+echo "Updating system packages..."
+apt_get_with_lock update || exit 1 # Utilisation de la fonction corrigée
 
-# Update and upgrade packages
-apt_get_with_lock update
-apt_get_with_lock upgrade -y
+echo "Installing essential system tools..."
+apt_get_with_lock install -y nano curl git unzip screen htop lsb-release ca-certificates gnupg software-properties-common || exit 1
 
-# Add multiverse, universe, and restricted repositories
-add-apt-repository -y multiverse universe restricted
-
-# Update package lists again
-apt_get_with_lock update
-
-# Mark installer as run
-touch $installerHome/azuracast_installer_runned
-
-# Issue: https://github.com/ashd0wn/AzuraCast-Ubuntu/issues/1#issuecomment-1440983104
-# Check for the existence of the adm group and create if it doesn't exist
-if ! grep -q "^adm:" /etc/group; then
-  echo "adm group not found. Adding adm group with members syslog and ubuntu."
-  echo "adm:x:4:syslog,ubuntu" >>/etc/group
+# Check for 'adm' group and create if not exists (already in your script)
+if ! getent group adm >/dev/null; then
+    echo "Creating 'adm' group..."
+    groupadd adm
 else
-  echo "adm group already exists, nothing to do."
+    echo "adm group already exists, nothing to do."
 fi
 
-# Install system packages and dependencies
-apt_get_with_lock install -y build-essential pwgen whois zstd software-properties-common \
-  apt-transport-https ca-certificates language-pack-en tini gosu curl wget \
-  tar zip unzip git rsync tzdata gpg-agent openssh-client openssl
-
-# Set the system locale to en_US.UTF-8
+# Set proper locale for the system (already in your script)
+echo "Setting system locale..."
+apt_get_with_lock install -y locales || exit 1
 locale-gen en_US.UTF-8
-update-locale LANG=en_US.UTF-8 LC_CTYPE=en_US.UTF-8
+
+mkdir -p /home/azuracast
+chown -R root:root /home/azuracast
+
+echo "System preparation complete."
