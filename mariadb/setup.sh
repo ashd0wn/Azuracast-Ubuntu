@@ -1,35 +1,44 @@
 #!/usr/bin/env bash
+set -euo pipefail
 
-##############################################################################
-# setup_mariadb_for_ubuntu_2404_native
-##############################################################################
+UBUNTU_CODENAME=$(lsb_release -cs)  # noble
+MARIADB_VERSION=11.8
 
-# Ce script installe MariaDB en utilisant les dépôts officiels d'Ubuntu 24.04 (Noble Numbat).
-# Cela permet de résoudre les problèmes de dépendance avec Perl.
+echo "Installation de MariaDB $MARIADB_VERSION sur Ubuntu $UBUNTU_CODENAME"
 
-# Installer les dépendances nécessaires.
-# La commande 'apt_get_with_lock' a été remplacée par 'sudo apt-get' car elle n'est pas une commande standard.
-sudo apt-get update -y
-sudo apt-get install -y wget software-properties-common
+# prérequis
+sudo apt update
+sudo apt install -y apt-transport-https curl ca-certificates gnupg
 
-# --- Installation de MariaDB depuis le dépôt officiel d'Ubuntu ---
+# Ajouter la clé de signature
+sudo mkdir -p /etc/apt/keyrings
+curl -fsSL https://mariadb.org/mariadb_release_signing_key.pgp \
+  | gpg --dearmor | sudo tee /etc/apt/keyrings/mariadb-keyring.pgp > /dev/null
 
-# Les dépôts officiels d'Ubuntu 24.04 contiennent MariaDB 10.11.
-# Cette version est entièrement compatible avec les autres paquets du système.
-echo "Installation de MariaDB 10.11 depuis les dépôts officiels d'Ubuntu 24.04..."
-sudo apt-get install -y mariadb-server mariadb-client
+# Ajouter le dépôt officiel
+echo "deb [signed-by=/etc/apt/keyrings/mariadb-keyring.pgp] https://deb.mariadb.org/$MARIADB_VERSION/ubuntu $UBUNTU_CODENAME main" \
+  | sudo tee /etc/apt/sources.list.d/mariadb.list >/dev/null
 
-# --- Fin de l'installation de MariaDB ---
+sudo apt update
 
-# Créer la base de données AzuraCast avec les variables fournies.
-# Utilisation de utf8mb4 pour une compatibilité complète avec les caractères spéciaux.
-/usr/bin/mariadb -e "create database $set_azuracast_database character set utf8mb4 collate utf8mb4_bin;"
-/usr/bin/mariadb -e "create user \`$set_azuracast_username\`@localhost identified by '$set_azuracast_password';"
-/usr/bin/mariadb -e "grant all privileges on $set_azuracast_database.* to \`$set_azuracast_username\`@localhost;"
+# Installation des paquets MariaDB
+sudo apt install -y mariadb-server mariadb-client
 
-# Le script original note que la sécurisation de l'installation sera effectuée plus tard.
-echo "La sécurisation de l'installation de MariaDB sera gérée par une autre étape."
+# Activer et démarrer MariaDB
+sudo systemctl enable mariadb
+sudo systemctl start mariadb
+sudo systemctl status mariadb --no-pager
 
-# Désactiver et arrêter le service MariaDB pour permettre à Supervisor de le gérer.
-systemctl disable mariadb
-systemctl stop mariadb
+# Sécurisation initiale
+echo "Sécurisation initiale avec mysql_secure_installation"
+sudo mysql_secure_installation <<EOF
+
+Y
+secure_root_password_here
+Y
+Y
+Y
+Y
+EOF
+
+echo "MariaDB $MARIADB_VERSION installée et sécurisée."
