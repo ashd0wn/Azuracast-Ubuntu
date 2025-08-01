@@ -1,28 +1,25 @@
 #!/usr/bin/env bash
 
 ##############################################################################
-# setup_mariadb_for_ubuntu_2404
+# setup_mariadb_for_ubuntu_2404_native
 ##############################################################################
 
-# Ce script est optimisé pour Ubuntu 24.04 (Noble Numbat) et MariaDB 11.8.
+# Ce script installe MariaDB en utilisant les dépôts officiels d'Ubuntu 24.04 (Noble Numbat).
+# Cela permet de résoudre les problèmes de dépendance avec Perl.
 
-# Installer les dépendances nécessaires pour ajouter un dépôt externe.
+# Installer les dépendances nécessaires.
 # La commande 'apt_get_with_lock' a été remplacée par 'sudo apt-get' car elle n'est pas une commande standard.
-sudo apt-get install -y wget software-properties-common dirmngr ca-certificates apt-transport-https
-
-# --- Configuration du dépôt MariaDB pour Ubuntu 24.04 ---
-
-# Utiliser le script officiel de configuration de dépôt MariaDB.
-# J'ai ajouté les paramètres --os-type="ubuntu" et --os-version="noble" pour corriger l'erreur de "os-type or os-version".
-curl -LsS https://r.mariadb.com/downloads/mariadb_repo_setup | sudo bash -s -- --mariadb-server-version="mariadb-11.8" --os-type="ubuntu" --os-version="noble"
-
-# Mettre à jour la liste des paquets après l'ajout du nouveau dépôt.
 sudo apt-get update -y
+sudo apt-get install -y wget software-properties-common
 
-# --- Fin de la configuration du dépôt ---
+# --- Installation de MariaDB depuis le dépôt officiel d'Ubuntu ---
 
-# Installer le serveur et le client MariaDB.
+# Les dépôts officiels d'Ubuntu 24.04 contiennent MariaDB 10.11.
+# Cette version est entièrement compatible avec les autres paquets du système.
+echo "Installation de MariaDB 10.11 depuis les dépôts officiels d'Ubuntu 24.04..."
 sudo apt-get install -y mariadb-server mariadb-client
+
+# --- Fin de l'installation de MariaDB ---
 
 # Créer la base de données AzuraCast avec les variables fournies.
 # Utilisation de utf8mb4 pour une compatibilité complète avec les caractères spéciaux.
