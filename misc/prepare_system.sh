@@ -34,4 +34,7 @@ echo "Setting system locale..."
 apt_get_with_lock install -y locales || exit 1
 locale-gen en_US.UTF-8
 
+mkdir -p /home/azuracast
+chown -R root:root /home/azuracast
+
 echo "System preparation complete."
