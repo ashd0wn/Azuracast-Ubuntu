@@ -1,46 +1,38 @@
 #!/usr/bin/env bash
-set -euo pipefail
 
-export DEBIAN_FRONTEND=noninteractive
+##############################################################################
+# setup_mariadb
+##############################################################################
 
-# Variables AzuraCast à adapter selon votre environnement
-set_azuracast_database="azuracast"
-set_azuracast_username="azuracast"
-set_azuracast_password="azuracast_password"
+# It seems that Azuracat is actually need MariaDB 10.9? Actual default Ubuntu version is 10.6
+apt_get_with_lock install -y wget software-properties-common dirmngr ca-certificates apt-transport-https
 
-UBUNTU_CODENAME=$(lsb_release -cs)  # noble
-MARIADB_VERSION=11.8
+if [ "$azuracast_git_version" = "stable" ] || [ "$azuracast_git_version" = "rolling" ]; then
+    curl -LsS https://r.mariadb.com/downloads/mariadb_repo_setup | sudo bash -s -- --mariadb-server-version="mariadb-$set_mariadb_version"
+else
+    apt_get_with_lock install software-properties-common gnupg2 -y
+    apt-key adv --fetch-keys 'https://mariadb.org/mariadb_release_signing_key.asc'
+    add-apt-repository -y 'deb [arch=amd64] http://mariadb.mirror.globo.tech/repo/10.8/ubuntu jammy main'
+    apt_get_with_lock update -y
+fi
 
-echo "→ Installation de MariaDB ${MARIADB_VERSION} sur Ubuntu ${UBUNTU_CODENAME}"
+apt_get_with_lock install -y mariadb-server mariadb-client
 
-# Pré-requis
-sudo apt update
-sudo apt install -y apt-transport-https curl ca-certificates gnupg lsb-release software-properties-common
+# Create AzuraCast DB
+mysql -e "create database $set_azuracast_database character set utf8mb4 collate utf8mb4_bin;"
+mysql -e "create user $set_azuracast_username@localhost identified by '$set_azuracast_password';"
+mysql -e "grant all privileges on $set_azuracast_database.* to $set_azuracast_username@localhost;"
 
-# Ajout de la clé GPG officielle
-sudo mkdir -p /etc/apt/keyrings
-curl -fsSL https://mariadb.org/mariadb_release_signing_key.pgp \
-  | gpg --dearmor | sudo tee /etc/apt/keyrings/mariadb-keyring.pgp > /dev/null
+# Prepare MySQL-Root-Password
+if [ "$azuracast_git_version" = "stable" ] || [ "$azuracast_git_version" = "rolling" ]; then
+    sed -i "s/changeToMySQLRootPW/$mysql_root_pass/g" mariadb/config/mysql_secure_installation.sql
 
-# Ajout du dépôt officiel MariaDB
-echo "deb [signed-by=/etc/apt/keyrings/mariadb-keyring.pgp] https://downloads.mariadb.com/MariaDB/mariadb-${MARIADB_VERSION}/repo/ubuntu ${UBUNTU_CODENAME} main" \
-  | sudo tee /etc/apt/sources.list.d/mariadb.list > /dev/null
+    # Secure MySQL in same way like: mysql_secure_installation
+    mysql -sfu root <"mariadb/config/mysql_secure_installation.sql"
+else
+    echo "do nothing, will do it later in another way"
+fi
 
-# Mise à jour et installation
-sudo apt update
-sudo apt install -y mariadb-server mariadb-client
-
-# Démarrer et activer le service
-sudo systemctl enable --now mariadb
-
-# Création base de données AzuraCast
-echo "→ Création de la base de données AzuraCast et de l'utilisateur"
-
-mysql -u root <<MYSQL_SCRIPT
-CREATE DATABASE IF NOT EXISTS \`${set_azuracast_database}\` CHARACTER SET utf8mb4 COLLATE utf8mb4_bin;
-CREATE USER IF NOT EXISTS '${set_azuracast_username}'@'localhost' IDENTIFIED BY '${set_azuracast_password}';
-GRANT ALL PRIVILEGES ON \`${set_azuracast_database}\`.* TO '${set_azuracast_username}'@'localhost';
-FLUSH PRIVILEGES;
-MYSQL_SCRIPT
-
-echo "✅ Base de données '${set_azuracast_database}' et utilisateur '${set_azuracast_username}' configurés."
+# Because of AzuraCasts Supervisor Integration
+systemctl disable mariadb
+systemctl stop mariadb
