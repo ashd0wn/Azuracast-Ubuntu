@@ -10,7 +10,7 @@ cd "$WORK_DIR"
 # Get the system architecture using dpkg and awk
 
 # Construct the download URL
-DOWNLOAD_URL="https://github.com/trummerschlunk/master_me/releases/download/1.2.0/master_me-1.2.0-linux-x86_64.tar.xz"
+DOWNLOAD_URL="https://github.com/trummerschlunk/master_me/releases/download/1.3.1/master_me-1.3.1-linux-x86_64.tar.xz"
 
 # Download the package
 wget -O master_me.tar.xz "$DOWNLOAD_URL"
