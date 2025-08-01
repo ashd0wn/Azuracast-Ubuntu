@@ -6,15 +6,22 @@
 
 # Ce script est optimisé pour Ubuntu 24.04 (Noble Numbat) et MariaDB 11.8.
 
-# Installer les dépendances nécessaires pour ajouter un dépôt externe.
+# Installer les dépendances nécessaires pour ajouter un dépôt APT sécurisé.
 apt_get_with_lock install -y wget software-properties-common dirmngr ca-certificates apt-transport-https
 
-# Ajouter le dépôt MariaDB 11.8.
+# --- Dépôt MariaDB pour Ubuntu 24.04 (méthode moderne sans apt-key) ---
+
+# Télécharger la clé GPG de MariaDB et la placer dans le répertoire des clés d'APT.
+curl -LsS https://mariadb.org/mariadb_release_signing_key.asc | sudo gpg --dearmor -o /usr/share/keyrings/mariadb.gpg
+
+# Ajouter le dépôt MariaDB 11.8 pour Ubuntu 24.04 (noble) en utilisant la clé GPG.
 # La version "noble" d'Ubuntu 24.04 est ciblée.
-apt_get_with_lock install software-properties-common gnupg2 -y
-apt-key adv --fetch-keys 'https://mariadb.org/mariadb_release_signing_key.asc'
-add-apt-repository -y 'deb [arch=amd64] http://mariadb.mirror.globo.tech/repo/11.8/ubuntu noble main'
+echo "deb [signed-by=/usr/share/keyrings/mariadb.gpg] http://mariadb.mirror.globo.tech/repo/11.8/ubuntu noble main" | sudo tee /etc/apt/sources.list.d/mariadb.list > /dev/null
+
+# Mettre à jour la liste des paquets après l'ajout du nouveau dépôt.
 apt_get_with_lock update -y
+
+# --- Fin de la configuration du dépôt ---
 
 # Installer le serveur et le client MariaDB.
 apt_get_with_lock install -y mariadb-server mariadb-client
