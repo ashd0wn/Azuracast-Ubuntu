@@ -23,16 +23,16 @@ systemctl stop unattended-upgrades || true
 
 # Update and upgrade packages
 wait_for_apt_lock
-apt update
+sudo apt update
 wait_for_apt_lock
-apt upgrade -y
+sudo apt upgrade -y
 
 # Add multiverse, universe, and restricted repositories
-add-apt-repository -y multiverse universe restricted
+sudo add-apt-repository -y multiverse universe restricted
 
 # Update package lists again
 wait_for_apt_lock
-apt update
+sudo apt update
 
 # Mark installer as run
 touch $installerHome/azuracast_installer_runned
@@ -48,7 +48,7 @@ fi
 
 # Install system packages and dependencies
 wait_for_apt_lock
-apt install -y build-essential pwgen whois zstd software-properties-common \
+sudo apt install -y build-essential pwgen whois zstd software-properties-common \
   apt-transport-https ca-certificates language-pack-en tini gosu curl wget \
   tar zip unzip git rsync tzdata gpg-agent openssh-client openssl
 
