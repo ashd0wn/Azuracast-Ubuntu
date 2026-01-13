@@ -24,4 +24,3 @@ rm liquidsoap_2.4.1-ubuntu-noble-ocaml5.4.0-1_amd64.deb
 
 # Start anything
 supervisorctl start all || :
-

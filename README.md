@@ -20,7 +20,7 @@ I intend to use AzuraCast with modifications (I only require the AutoDJ feature)
 Copy and paste the entire line into your CLI.
 
 ```
-mkdir /root/azuracast_installer && cd /root/azuracast_installer && git clone https://github.com/ashd0wn/AzuraCast-Ubuntu.git . && git checkout 0.19.1 && chmod +x install.sh && ./install.sh -i
+mkdir /root/azuracast_installer && cd /root/azuracast_installer && git clone https://github.com/ashd0wn/AzuraCast-Ubuntu.git . && git checkout 0.19.1 && chmod -R +x ./* && ./install.sh -i
 ```
 
 Post-installation, verify everything functions correctly. If you come across issues tied to this installer, please report them here and refrain from troubling the AzuraCast developers with problems specific to this repository.
@@ -32,7 +32,7 @@ Post-installation, verify everything functions correctly. If you come across iss
 The prior installer doesn't have an upgrade routine. You must first update the installer itself.
 
 ```
-rm -rf /root/azuracast_installer && mkdir -p /root/azuracast_installer && cd /root/azuracast_installer && git clone https://github.com/ashd0wn/AzuraCast-Ubuntu.git . && git checkout 0.19.1 && chmod +x install.sh && ./install.sh --upgrade
+rm -rf /root/azuracast_installer && mkdir -p /root/azuracast_installer && cd /root/azuracast_installer && git clone https://github.com/ashd0wn/AzuraCast-Ubuntu.git . && git checkout 0.19.1 && chmod -R +x ./* && ./install.sh --upgrade
 ```
 
 ## Installation (Latest Rolling Release)
